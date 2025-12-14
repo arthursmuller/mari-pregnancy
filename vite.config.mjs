@@ -4,5 +4,5 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/pregnancy-app/', // 👈 repo name
+  base: '/mari-pregnancy/', // 👈 repo name
 })

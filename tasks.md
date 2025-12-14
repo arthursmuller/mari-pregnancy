@@ -1,5 +1,3 @@
-
-
 **Context**
 - Learn the project in the the zip file i am sending you is very good. keep it, just change the "riscos e prevencoes" sections
 
@@ -117,4 +115,16 @@ Vômitos não-biliosos (por refluxo ou imaturidade gástrica)
 
 
 
+-----
 - ver questão do hormonio que ela está tomando
+-----
+----
+Incluir em orientação "dieta" tab, exemplo de alimentos para comer e exemplos de alimentos apra evitar como frutos do mar (camrao), gorgonzola e etc.., (Azeite de oliva,e tc...)
+------
+incluir em riscos e prevenções como prevenis febre, e mal-estar, enjoo pra evitar tomar remedios.
+-----
+- add medical record section, with
+-----
+- add a new heading for the Jornada Pós-Parto sdection
+- add parenting guides, como nao crar um filho mimado, forte, alto, fazer ele lidar bem com dinheiro, frustrações, ser educado. Quewro que ele aprenda violao, ingles, boxe, tenis, programação e futebol.
+- quais são atitudes dos pais que impactam negativamnete os filhos.

@@ -1,64 +1,55 @@
 import React from 'react';
 import { maternalVaccines, babyVaccines } from '../data';
 
-/**
- * VaccinesSection lists immunisations recommended for the mother during
- * pregnancy and the schedule for the baby after birth.  It serves as
- * a quick reference to plan appointments with the clinic or public
- * health service.
- */
 export default function VaccinesSection() {
   return (
     <div>
-      <h2 className="text-2xl font-bold text-primary mb-4">Calendário de vacinas</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Maternal vaccines */}
-        <div className="bg-white shadow rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-primary mb-3">
-            Para a mãe
-          </h3>
-          <table className="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-2 py-1 border-b text-gray-700">Vacina</th>
-                <th className="px-2 py-1 border-b text-gray-700">Quando</th>
-                <th className="px-2 py-1 border-b text-gray-700">Observações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {maternalVaccines.map((vac) => (
-                <tr key={vac.name} className="even:bg-gray-50">
-                  <td className="px-2 py-1 border-b font-medium text-gray-800">
-                    {vac.name}
-                  </td>
-                    <td className="px-2 py-1 border-b text-gray-700">
-                    {vac.schedule}
-                  </td>
-                  <td className="px-2 py-1 border-b text-gray-700">
-                    {vac.notes}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Calendário de Vacinas</h2>
+      <div className="grid lg:grid-cols-2 gap-8">
+        
+        {/* Mother */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+             <div className="bg-pink-50 p-4 border-b border-pink-100 flex items-center">
+                 <span className="text-2xl mr-3">🤰</span>
+                 <h3 className="font-bold text-pink-800 text-lg">Para a Mamãe</h3>
+             </div>
+             <div className="p-0">
+                 {maternalVaccines.map((vac, idx) => (
+                     <div key={idx} className="p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                         <div className="flex justify-between items-start mb-1">
+                             <span className="font-bold text-gray-800">{vac.name}</span>
+                             <span className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded text-gray-600">{vac.schedule}</span>
+                         </div>
+                         <p className="text-sm text-gray-500">{vac.notes}</p>
+                     </div>
+                 ))}
+             </div>
         </div>
-        {/* Baby vaccines */}
-        <div className="bg-white shadow rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-primary mb-3">Para o bebê</h3>
-          {babyVaccines.map((entry) => (
-            <div key={entry.age} className="mb-4">
-              <h4 className="font-semibold text-primary mb-1">{entry.age}</h4>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                {entry.vaccines.map((vac) => (
-                  <li key={vac.name}>
-                    <strong>{vac.name}</strong>
-                    {vac.notes && <span>: {vac.notes}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+        {/* Baby */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+             <div className="bg-blue-50 p-4 border-b border-blue-100 flex items-center">
+                 <span className="text-2xl mr-3">👶</span>
+                 <h3 className="font-bold text-blue-800 text-lg">Para o Bebê</h3>
+             </div>
+             <div className="p-4 space-y-6">
+                 {babyVaccines.map((entry) => (
+                     <div key={entry.age} className="relative pl-4 border-l-2 border-blue-100">
+                         <span className="absolute -left-[5px] top-0 w-2.5 h-2.5 bg-blue-400 rounded-full"></span>
+                         <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-2">{entry.age}</h4>
+                         <ul className="space-y-2">
+                             {entry.vaccines.map((vac, i) => (
+                                 <li key={i} className="text-sm text-gray-700 bg-gray-50 p-2 rounded border border-gray-100">
+                                     <strong>{vac.name}</strong>
+                                     {vac.notes && <span className="block text-xs text-gray-500 mt-0.5">{vac.notes}</span>}
+                                 </li>
+                             ))}
+                         </ul>
+                     </div>
+                 ))}
+             </div>
         </div>
+
       </div>
     </div>
   );

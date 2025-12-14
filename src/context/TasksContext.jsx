@@ -5,8 +5,9 @@ import { allTasks, weeklyData } from '../data';
 // logic for generating default tasks or modify the structure of
 // generalTasks/cronogramTasks, bump this number. This allows the
 // application to know when it should reseed localStorage instead
-// of using stale data.  See the initialization effect for usage.
-const TASKS_SEED_VERSION = 1;
+// of using stale data. See the initialization effect for usage.
+// UPDATE: Bumped to 2 to include new scheduling tasks.
+const TASKS_SEED_VERSION = 2;
 
 // Create a context to manage general tasks and cronogram tasks across the app.
 
@@ -14,10 +15,10 @@ const TasksContext = createContext();
 
 /**
  * Derive initial general tasks and cronogram tasks from the static
- * allTasks list.  General tasks are deduplicated by description and
- * contain an id, description, type and optional dueDate.  Cronogram
+ * allTasks list. General tasks are deduplicated by description and
+ * contain an id, description, type and optional dueDate. Cronogram
  * tasks reference a generalTaskId and keep track of week, due dates
- * and status.  They can later override their due date individually.
+ * and status. They can later override their due date individually.
  */
 function deriveInitialTasks() {
   const generalTaskMap = {};
@@ -62,7 +63,7 @@ function deriveInitialTasks() {
 
   /**
    * Helper to compute a due date (ISO string) from a week number using
-   * weeklyData.  It returns the end date of the week as in the schedule.
+   * weeklyData. It returns the end date of the week as in the schedule.
    */
   function getWeekDueDate(weekNumber) {
     const weekItem = weeklyData.find((w) => w.weekNumber === weekNumber);
@@ -113,53 +114,86 @@ function deriveInitialTasks() {
   });
 
   // Additional tasks to enrich the schedule (appointments and preparations)
+  // Enhanced to include "Scheduling" tasks prior to the actual events
   const extraTasksByWeek = {
     4: [
-      { desc: 'Marcar consulta com Nutricionista', type: 'Única' },
-      { desc: 'Marcar consulta com Obstetra', type: 'Única' },
-      { desc: 'Marcar exames de sangue', type: 'Única' },
+      { desc: 'Ligar para marcar consulta inicial com Obstetra', type: 'Única' },
+      { desc: 'Agendar consulta com Nutricionista (Dieta Vegetariana)', type: 'Única' },
+      { desc: 'Verificar laboratórios cobertos pelo plano para exames de sangue', type: 'Única' },
     ],
     5: [
       { desc: 'Comparecer à consulta com Nutricionista', type: 'Única' },
       { desc: 'Comparecer à consulta com Obstetra', type: 'Única' },
-      { desc: 'Realizar exames de sangue', type: 'Única' },
+      { desc: 'Realizar exames de sangue iniciais', type: 'Única' },
+      { desc: 'Marcar retorno com Obstetra', type: 'Única' },
+      { desc: 'Marcar consulta com Ginecologista', type: 'Única' },
+      { desc: 'Marcar retorno com Nutricionista', type: 'Única' },
+    ],
+    10: [
+       { desc: 'Ligar para agendar Ultrassom Translucência Nucal (para Sem 12)', type: 'Única' },
+       { desc: 'Agendar consulta de Medicina Fetal', type: 'Única' },
+       { desc: 'Falar com mãe para pegar itens meus de criança', type: 'Única' },
     ],
     11: [
-      { desc: 'Marcar Ultrassom Translucência Nucal', type: 'Única' },
-      { desc: 'Marcar consulta de Medicina Fetal', type: 'Única' },
+      { desc: 'Confirmar agendamento Translucência Nucal', type: 'Única' },
     ],
     12: [
       { desc: 'Realizar Ultrassom Translucência Nucal', type: 'Única' },
       { desc: 'Comparecer consulta de Medicina Fetal', type: 'Única' },
+      { desc: 'Agendar consulta de rotina Obstetra (Mensal)', type: 'Periódica' },
+    ],
+    16: [
+      // Preparing for week 20-22 exams (Morphological is hard to schedule, do it early)
+      { desc: 'Ligar para agendar Ultrassom Morfológico (para Sem 21)', type: 'Única' },
+      { desc: 'Agendar Ecocardiograma Fetal (se solicitado)', type: 'Única' },
+    ],
+    18: [
+       { desc: 'Agendar consulta de retorno Nutricionista (Ajuste 2º Tri)', type: 'Única' },
     ],
     20: [
-      { desc: 'Marcar Ultrassom Morfológico', type: 'Única' },
-      { desc: 'Marcar consulta com Dentista', type: 'Única' },
+      { desc: 'Agendar consulta com Dentista (Check-up)', type: 'Única' },
+      { desc: 'Pesquisar e agendar cursos de preparação para o parto', type: 'Única' },
     ],
     21: [
       { desc: 'Realizar Ultrassom Morfológico', type: 'Única' },
       { desc: 'Comparecer consulta com Dentista', type: 'Única' },
     ],
+    23: [
+        // Preparing for Week 24-26 exams
+        { desc: 'Agendar Teste de Tolerância à Glicose (Curva Glicêmica)', type: 'Única' },
+        { desc: 'Verificar onde tomar vacinas dTpa e Influenza', type: 'Única' },
+    ],
     24: [
-      { desc: 'Marcar Teste de Tolerância à Glicose', type: 'Única' },
-      { desc: 'Marcar vacinas dTpa e Influenza', type: 'Única' },
+      { desc: 'Marcar vacinas dTpa e Influenza (se ainda não agendou)', type: 'Única' },
     ],
     26: [
       { desc: 'Realizar Teste de Tolerância à Glicose', type: 'Única' },
       { desc: 'Tomar vacinas dTpa e Influenza', type: 'Única' },
+      { desc: 'Agendar retorno Nutricionista (Ajuste Final 3º Tri)', type: 'Única' },
     ],
     28: [
-      { desc: 'Marcar exame do Cotonete', type: 'Única' },
-      { desc: 'Marcar consulta com Pediatra', type: 'Única' },
+      // Preparing for late exams
+      { desc: 'Ligar para agendar Ultrassom 3º Trimestre (Doppler)', type: 'Única' },
+      { desc: 'Agendar consulta pré-natal com Pediatra', type: 'Única' },
+      { desc: 'Agendar visita à Maternidade', type: 'Única' },
     ],
     30: [
-      { desc: 'Realizar exame do Cotonete', type: 'Única' },
       { desc: 'Comparecer consulta com Pediatra', type: 'Única' },
+      { desc: 'Realizar visita à Maternidade', type: 'Única' },
       { desc: 'Lavar roupas do bebê e organizar enxoval', type: 'Única' },
       { desc: 'Preparar mala da maternidade e instalar bebê conforto', type: 'Única' },
     ],
+    32: [
+        { desc: 'Agendar consulta com Anestesiologista (Avaliação pré-parto)', type: 'Única' },
+        { desc: 'Agendar Exame do Cotonete (para Sem 35-36)', type: 'Única' },
+    ],
+    35: [
+        { desc: 'Realizar Exame do Cotonete (Estreptococo B)', type: 'Única' },
+    ],
+    36: [
+        { desc: 'Deixar agendadas consultas semanais com Obstetra até o parto', type: 'Única' },
+    ],
     38: [
-      { desc: 'Marcar consultas semanais com Obstetra', type: 'Única' },
       { desc: 'Comparecer consultas semanais com Obstetra', type: 'Única' },
       { desc: 'Monitorar contrações e perda de líquido diariamente', type: 'Execução diária' },
     ],
@@ -207,7 +241,7 @@ function deriveInitialTasks() {
 export function TasksProvider({ children }) {
   const [generalTasks, setGeneralTasks] = useState([]);
   const [cronogramTasks, setCronogramTasks] = useState([]);
-  // Track whether the initial load of tasks has completed.  This
+  // Track whether the initial load of tasks has completed. This
   // prevents our persistence effects from writing empty arrays to
   // localStorage before the tasks have been initialised.
   const [loaded, setLoaded] = useState(false);
@@ -215,9 +249,9 @@ export function TasksProvider({ children }) {
   // Initialize from localStorage or derive from default on first render
   useEffect(() => {
     // When mounting, determine whether to use stored tasks or reseed
-    // them based on the seed version.  If either seed version is
+    // them based on the seed version. If either seed version is
     // missing or does not match TASKS_SEED_VERSION, we reseed by
-    // deriving defaults.  Otherwise we load from localStorage.  This
+    // deriving defaults. Otherwise we load from localStorage. This
     // prevents user-entered tasks from being overwritten by new
     // releases of the app while still allowing us to introduce new
     // default data when the version increases.
@@ -266,9 +300,9 @@ export function TasksProvider({ children }) {
     setLoaded(true);
   }, []);
 
-  // Persist changes to localStorage.  These effects are guarded by
+  // Persist changes to localStorage. These effects are guarded by
   // the `loaded` flag so they do not run until after the initial
-  // seeding has completed.  Without this guard the first render
+  // seeding has completed. Without this guard the first render
   // would write empty arrays to localStorage, erasing any saved data.
   useEffect(() => {
     if (!loaded) return;
@@ -289,8 +323,8 @@ export function TasksProvider({ children }) {
   }, [cronogramTasks, loaded]);
 
   /**
-   * Add a new general task.  If a task with the same description already
-   * exists, reuse it instead of creating a duplicate.  Returns the id
+   * Add a new general task. If a task with the same description already
+   * exists, reuse it instead of creating a duplicate. Returns the id
    * of the general task.
    */
   const addGeneralTask = ({ description, type = 'Única', dueDate = null }) => {
@@ -322,7 +356,7 @@ export function TasksProvider({ children }) {
   };
 
   /**
-   * Update a general task with new values.  If dueDate changes it
+   * Update a general task with new values. If dueDate changes it
    * propagates to cronogram tasks that do not have individual overrides.
    */
   const updateGeneralTask = (id, updates) => {
@@ -371,7 +405,7 @@ export function TasksProvider({ children }) {
   };
 
   /**
-   * Remove a general task.  Also remove any cronogram tasks that
+   * Remove a general task. Also remove any cronogram tasks that
    * reference it.
    */
   const removeGeneralTask = (id) => {
@@ -401,9 +435,9 @@ export function TasksProvider({ children }) {
   };
 
   /**
-   * Add a cronogram task for a specific week and description/type.  If
+   * Add a cronogram task for a specific week and description/type. If
    * a general task with the description exists it will be linked,
-   * otherwise a new general task is created.  Returns the id of the
+   * otherwise a new general task is created. Returns the id of the
    * created cronogram task.
    */
   const addCronogramTask = ({ description, type = 'Única', week, dueDate = null }) => {
@@ -437,7 +471,7 @@ export function TasksProvider({ children }) {
   };
 
   /**
-   * Update a cronogram task by id.  Accepts partial updates.  If
+   * Update a cronogram task by id. Accepts partial updates. If
    * overrideDueDate is provided, it sets that property.
    */
   const updateCronogramTask = (id, updates) => {
@@ -471,8 +505,8 @@ export function TasksProvider({ children }) {
   };
 
   /**
-   * Reset all tasks back to the default seed.  This will discard any
-   * user-added or edited tasks.  It also updates the seed version
+   * Reset all tasks back to the default seed. This will discard any
+   * user-added or edited tasks. It also updates the seed version
    * keys to the current TASKS_SEED_VERSION so that subsequent
    * reloads will use these defaults.
    */

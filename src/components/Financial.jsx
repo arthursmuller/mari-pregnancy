@@ -1,520 +1,313 @@
 import React, { useState, useEffect } from 'react';
 import { weeklyData, BABY_ITEMS_CHECKLIST_PRIORITIZED } from '../data';
 
-// Local cost mapping used across components.  If you update values here,
-// please also update the map in Cronograma.jsx for consistency.
+// Mapa de custos
 const taskCostMap = {
-  'Ultrassom Translucência Nucal': 500,
-  'Ultrassom Morfológico': 600,
-  'Teste de Tolerância à Glicose': 150,
-  'vacina dTpa': 200,
-  'Influenza': 100,
-  'Exame do Cotonete': 100,
-  'USG com Doppler': 250,
-  'Cardiotocografia': 200,
-  'Encomendar Móveis': 2000,
-  'Carrinho de Bebê': 2500,
-  'Enxoval de Roupas': 800,
-  'Fraldas': 300,
-  'Kit Berço': 400,
-  'Banheira': 200,
-  'Mala Maternidade': 500,
-  'Farmacinha do bebê': 200,
-  'Repelente seguro': 50,
-  'Creme hidratante': 80,
-  'Sutiãs confortáveis': 120,
-  'Vitaminas pré-natais': 150,
+  // Itens Originais
+  'Ultrassom Translucência Nucal': 500, 'Ultrassom Morfológico': 600, 'Teste de Tolerância à Glicose': 150,
+  'vacina dTpa': 200, 'Influenza': 100, 'Exame do Cotonete': 100, 'USG com Doppler': 250, 'Cardiotocografia': 200,
+  'Encomendar Móveis': 2000, 'Carrinho de Bebê': 2500, 'Enxoval de Roupas': 800, 'Fraldas': 300, 'Kit Berço': 400,
+  'Banheira': 200, 'Mala Maternidade': 500, 'Farmacinha do bebê': 200, 'Repelente seguro': 50,
+  'Creme hidratante': 80, 'Sutiãs confortáveis': 120, 'Vitaminas pré-natais': 150,
+  
+  // Pós-Parto Recorrente
+  'Pediatra': 400,
+  'Remédios': 150,
+  'Vitaminas Bebê': 100,
+  'Alimentação/Papinhas (6m+)': 400,
+  'Roupas (Renovação Trimestral)': 800,
+  
+  // Pós-Parto Compra Única (Futuro)
+  'Brinquedos': 300,
+  'Video Game': 3500,
+  'Raquete de Tenis': 1200,
+  'Raqueteira': 400,
+  'Violao': 900,
+  'Luvas de Boxe': 250,
+  'Computador': 4500,
+  'Celular': 3000,
+  'Bicicleta': 800
 };
 
-// Keywords used to categorise tasks from weeklyData
-const doctorKeywords = [
-  'consulta',
-  'obstetra',
-  'nutricionista',
-  'dentista',
-  'fisioterapeuta',
-  'pediatra',
-  'anestesiologista',
-];
-const examKeywords = [
-  'ultrassom',
-  'usg',
-  'teste',
-  'exame',
-  'curva glicêmica',
-  'cardiotocografia',
-  'cultura',
-  'cotonete',
-];
-const purchaseKeywords = [
-  'comprar',
-  'compra',
-  'encomendar',
-  'mala',
-  'farmacinha',
-  'carrinho',
-  'berço',
-  'roupa',
-  'kit',
-  'banheira',
-  'fraldas',
-];
+const doctorKeywords = ['consulta', 'obstetra', 'nutricionista', 'dentista', 'fisioterapeuta', 'pediatra', 'anestesiologista'];
+const examKeywords = ['ultrassom', 'usg', 'teste', 'exame', 'curva glicêmica', 'cardiotocografia', 'cultura', 'cotonete'];
+const purchaseKeywords = ['comprar', 'compra', 'encomendar', 'mala', 'farmacinha', 'carrinho', 'berço', 'roupa', 'kit', 'banheira', 'fraldas'];
 
-/*
- * Derive a flat list of costable items during pregnancy.  Each
- * appointment, exam or purchase is represented individually with
- * default cost, quantity and periodicity.  Inventory items that
- * should be bought before birth (e.g. moisés, carrinho) are also
- * included here with a one‑time recurrence.  This granular approach
- * allows the user to toggle each occurrence separately and edit
- * quantity, periodicity and unit cost.
- */
 function generatePregnancyItems() {
   const items = [];
   let idCounter = 0;
-  // Iterate through weekly tasks and extract those that represent
-  // consultations, exams or shopping.  Each occurrence is treated as
-  // independent.
+  
+  // 1. Gera a partir das tarefas semanais
   weeklyData.forEach((week) => {
     week.tasks.forEach((task) => {
       const text = task.text || '';
       const lower = text.toLowerCase();
       let include = false;
       let cost = 0;
-      // Doctor visits
-      if (doctorKeywords.some((kw) => lower.includes(kw))) {
-        include = true;
-        cost = 300;
-      }
-      // Exams
+      if (doctorKeywords.some((kw) => lower.includes(kw))) { include = true; cost = 300; }
       if (examKeywords.some((kw) => lower.includes(kw))) {
         include = true;
-        // Try to match a more specific cost from the map
         let matched = false;
-        Object.keys(taskCostMap).forEach((key) => {
-          if (lower.includes(key.toLowerCase())) {
-            cost = taskCostMap[key];
-            matched = true;
-          }
-        });
+        Object.keys(taskCostMap).forEach((key) => { if (lower.includes(key.toLowerCase())) { cost = taskCostMap[key]; matched = true; } });
         if (!matched) cost = 200;
       }
-      // Shopping/preparation
       if (purchaseKeywords.some((kw) => lower.includes(kw))) {
         include = true;
         let matchedPurchase = false;
-        Object.keys(taskCostMap).forEach((key) => {
-          if (lower.includes(key.toLowerCase())) {
-            cost = taskCostMap[key];
-            matchedPurchase = true;
-          }
-        });
+        Object.keys(taskCostMap).forEach((key) => { if (lower.includes(key.toLowerCase())) { cost = taskCostMap[key]; matchedPurchase = true; } });
         if (!matchedPurchase) cost = 100;
       }
-      // Only push tasks that were classified as costable
-      if (include) {
-        items.push({
-          id: idCounter++,
-          name: text,
-          cost,
-          quantity: 1,
-          periodicity: 1,
-          included: true,
-        });
-      }
+      if (include) items.push({ id: idCounter++, name: text, cost, quantity: 1, periodicity: 1, type: 'one_time', included: true });
     });
   });
-  // Add inventory items that are one‑time purchases before birth
+  
+  // 2. Adiciona itens do checklist que não são recorrentes (Investimento Inicial)
   Object.entries(BABY_ITEMS_CHECKLIST_PRIORITIZED).forEach(([category, list]) => {
     list.forEach((it) => {
+      // Pula itens que são tratados no pós-parto ou higiene recorrente
+      if (it.item.toLowerCase().includes('fralda') || it.item.toLowerCase().includes('lenço') || it.item.toLowerCase().includes('pomada')) return;
+
       const name = it.item;
-      // Determine if this item recurs monthly; if not, it's a one‑time purchase
-      let recurring = false;
       const lower = name.toLowerCase();
-      if (category === 'diapering_and_hygiene') {
-        if (lower.includes('fraldas') || lower.includes('lenços') || lower.includes('pomada')) recurring = true;
-      }
-      if (category === 'feeding') {
-        if (lower.includes('paninhos')) recurring = true;
-      }
-      if (category === 'clothing') recurring = true;
-      if (!recurring) {
-        // Determine a default cost for the item; try to use taskCostMap
-        let itemCost = 0;
-        Object.keys(taskCostMap).forEach((key) => {
-          if (lower.includes(key.toLowerCase())) itemCost = taskCostMap[key];
-        });
-        if (!itemCost) {
-          // Fallback: assign moderate default based on type
+      let itemCost = 0;
+      Object.keys(taskCostMap).forEach((key) => { if (lower.includes(key.toLowerCase())) itemCost = taskCostMap[key]; });
+      if (!itemCost) {
           if (lower.includes('carrinho') || lower.includes('berço') || lower.includes('móveis')) itemCost = 1500;
           else itemCost = 200;
-        }
-        items.push({
-          id: idCounter++,
-          name,
-          cost: itemCost,
-          quantity: 1,
-          periodicity: 1,
-          included: true,
-        });
+      }
+      if (!items.some(i => i.name === name)) {
+        items.push({ id: idCounter++, name, cost: itemCost, quantity: 1, periodicity: 1, type: 'one_time', included: true });
       }
     });
   });
   return items;
 }
 
-/*
- * Derive a list of items that recur after birth.  Most clothing and
- * consumables (fraldas, lenços, etc.) are considered monthly expenses.
- * Additional items requested by the user (botinha, boné, bicicleta,
- * papinha, fraldas) are appended here with sensible default costs.
- */
 function generateAfterBirthItems() {
   const items = [];
-  let idCounter = 0;
+  let idCounter = 1000;
+
+  // 1. ITENS RECORRENTES (Higiene Básica)
   Object.entries(BABY_ITEMS_CHECKLIST_PRIORITIZED).forEach(([category, list]) => {
     list.forEach((it) => {
       const name = it.item;
       const lower = name.toLowerCase();
-      let recurring = false;
-      if (category === 'diapering_and_hygiene') {
-        if (lower.includes('fraldas') || lower.includes('lenços') || lower.includes('pomada')) recurring = true;
-      }
-      if (category === 'feeding') {
-        if (lower.includes('paninhos')) recurring = true;
-      }
-      if (category === 'clothing') recurring = true;
-      if (recurring) {
-        // Determine default cost; try to use taskCostMap if relevant
+      if (category === 'diapering_and_hygiene' && (lower.includes('fraldas') || lower.includes('lenços') || lower.includes('pomada'))) {
         let cost = 0;
-        Object.keys(taskCostMap).forEach((key) => {
-          if (lower.includes(key.toLowerCase())) cost = taskCostMap[key];
-        });
-        if (!cost) {
-          if (lower.includes('fralda')) cost = 300;
-          else if (lower.includes('lenço')) cost = 30;
-          else if (lower.includes('pomada')) cost = 30;
-          else if (lower.includes('macac') || lower.includes('bodies')) cost = 150;
-          else if (lower.includes('meias') || lower.includes('botinha')) cost = 50;
-          else cost = 100;
-        }
-        items.push({
-          id: idCounter++,
-          name,
-          cost,
-          quantity: 1,
-          periodicity: 1,
-          included: true,
-        });
+        if (lower.includes('fralda')) cost = 300;
+        else if (lower.includes('lenço')) cost = 30;
+        else if (lower.includes('pomada')) cost = 30;
+        items.push({ id: idCounter++, name, cost, quantity: 1, periodicity: 1, type: 'recurring', included: true, description: it.note });
       }
     });
   });
-  // Append extra items explicitly requested.  If an item already
-  // exists in the list, we avoid duplicating it.
-  const extra = ['Botinha', 'Boné', 'Bicicleta', 'Papinha', 'Fraldas'];
-  extra.forEach((label) => {
-    const exists = items.some((it) => it.name.toLowerCase() === label.toLowerCase());
-    if (!exists) {
-      const lower = label.toLowerCase();
-      let cost = 100;
-      if (lower.includes('fralda')) cost = 300;
-      else if (lower.includes('papinha')) cost = 30;
-      else if (lower.includes('botinha')) cost = 50;
-      else if (lower.includes('boné')) cost = 40;
-      else if (lower.includes('bicicleta')) cost = 500;
-      items.push({
-        id: idCounter++,
-        name: label,
-        cost,
-        quantity: 1,
-        periodicity: 1,
-        included: true,
-      });
-    }
+
+  // 2. ITENS RECORRENTES ADICIONAIS (Manuais)
+  const recurringExtras = [
+      { name: 'Pediatra (Rotina)', cost: 400, periodicity: 1, desc: 'Consultas mensais de acompanhamento e puericultura.' },
+      { name: 'Vitaminas Bebê', cost: 100, periodicity: 1, desc: 'Vitamina D (Adetil/Depura) e Ferro conforme prescrição.' },
+      { name: 'Remédios (Eventuais)', cost: 150, periodicity: 1, desc: 'Antitérmicos, analgésicos e itens de farmácia.' },
+      { name: 'Alimentação/Papinhas (6m+)', cost: 400, periodicity: 1, desc: 'Introdução alimentar (frutas, legumes) e fórmula (se necessário) até 3 anos.' },
+      { name: 'Roupas (Renovação Trimestral)', cost: 800, periodicity: 3, desc: 'Inclui meias, botinhas, macacões, bonés e roupas de sair. O bebê muda de tamanho a cada 3 meses.' }
+  ];
+
+  recurringExtras.forEach(ex => {
+      items.push({ id: idCounter++, name: ex.name, cost: ex.cost, quantity: 1, periodicity: ex.periodicity, type: 'recurring', included: true, description: ex.desc });
   });
+
+  // 3. ITENS DE COMPRA ÚNICA FUTURA
+  const oneTimeExtras = [
+    { name: 'Celular', desc: 'Para comunicação/segurança futura.' },
+    { name: 'Raquete de Tenis', desc: 'Incentivo ao esporte.' },
+    { name: 'Raqueteira', desc: 'Equipamento esportivo.' },
+    { name: 'Video Game', desc: 'Lazer.' },
+    { name: 'Violao', desc: 'Educação musical.' },
+    { name: 'Luvas de Boxe', desc: 'Atividade física.' },
+    { name: 'Computador', desc: 'Estudos e uso pessoal.' },
+    { name: 'Bicicleta', desc: 'Lazer e atividade motora.' },
+    { name: 'Brinquedos (Lote Anual)', desc: 'Brinquedos educativos variados.' }
+  ];
+
+  oneTimeExtras.forEach(extra => {
+      let cost = 200;
+      const lower = extra.name.toLowerCase();
+      Object.keys(taskCostMap).forEach((key) => { if (lower.includes(key.toLowerCase())) cost = taskCostMap[key]; });
+      
+      items.push({ id: idCounter++, name: extra.name, cost, quantity: 1, periodicity: 1, type: 'one_time', included: true, description: extra.desc });
+  });
+
   return items;
 }
 
 export default function Financial() {
-  // State: lists of items for pregnancy and after birth.  We use
-  // lazy initialisers to read any previously saved data from
-  // localStorage.  This avoids a separate effect for loading and
-  // ensures values persist between sessions.  If nothing is stored
-  // yet, we fall back to the generated defaults.
   const [pregnancyItems, setPregnancyItems] = useState(() => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem('financialPregnancyItems');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return generatePregnancyItems();
+      const saved = window.localStorage.getItem('financialPregnancyItems');
+      return saved ? JSON.parse(saved) : generatePregnancyItems();
+    } catch (e) { return generatePregnancyItems(); }
   });
+
   const [afterBirthItems, setAfterBirthItems] = useState(() => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const saved = window.localStorage.getItem('financialAfterBirthItems');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-    return generateAfterBirthItems();
+      const saved = window.localStorage.getItem('financialAfterBirthItems_v3'); 
+      if (saved) return JSON.parse(saved);
+      return generateAfterBirthItems();
+    } catch (e) { return generateAfterBirthItems(); }
   });
 
-  // Persist changes to localStorage whenever the lists change.  Using
-  // separate effects ensures that each list persists independently.
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('financialPregnancyItems', JSON.stringify(pregnancyItems));
-      }
-    } catch (e) {
-      // ignore write errors
-    }
-  }, [pregnancyItems]);
+  useEffect(() => { localStorage.setItem('financialPregnancyItems', JSON.stringify(pregnancyItems)); }, [pregnancyItems]);
+  useEffect(() => { localStorage.setItem('financialAfterBirthItems_v3', JSON.stringify(afterBirthItems)); }, [afterBirthItems]);
 
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('financialAfterBirthItems', JSON.stringify(afterBirthItems));
-      }
-    } catch (e) {
-      // ignore write errors
-    }
-  }, [afterBirthItems]);
+  const handlePregChange = (id, field, value) => setPregnancyItems(prev => prev.map(it => it.id === id ? { ...it, [field]: value } : it));
+  const handleAfterChange = (id, field, value) => setAfterBirthItems(prev => prev.map(it => it.id === id ? { ...it, [field]: value } : it));
 
-  // Handlers to update fields on pregnancy items
-  const handlePregChange = (id, field, value) => {
-    setPregnancyItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)),
-    );
-  };
-  // Handlers to update fields on after birth items
-  const handleAfterChange = (id, field, value) => {
-    setAfterBirthItems((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, [field]: value } : it)),
-    );
-  };
+  const pregnancyTotal = pregnancyItems.reduce((sum, it) => it.included ? sum + (parseFloat(it.cost) * parseFloat(it.quantity)) : sum, 0);
+  
+  const afterBirthMonthlyTotal = afterBirthItems
+    .filter(it => it.type === 'recurring')
+    .reduce((sum, it) => it.included ? sum + ((parseFloat(it.cost) * parseFloat(it.quantity)) / parseFloat(it.periodicity)) : sum, 0);
 
-  // Compute totals: pregnancy total (one‑time costs) and after birth monthly total
-  const pregnancyTotal = pregnancyItems.reduce((sum, it) => {
-    if (!it.included) return sum;
-    const qty = parseFloat(it.quantity) || 0;
-    const period = parseFloat(it.periodicity) || 1;
-    const unitCost = parseFloat(it.cost) || 0;
-    return sum + (unitCost * qty) / period;
-  }, 0);
-  const afterBirthTotal = afterBirthItems.reduce((sum, it) => {
-    if (!it.included) return sum;
-    const qty = parseFloat(it.quantity) || 0;
-    const period = parseFloat(it.periodicity) || 1;
-    const unitCost = parseFloat(it.cost) || 0;
-    return sum + (unitCost * qty) / period;
-  }, 0);
+  const afterBirthOneTimeTotal = afterBirthItems
+    .filter(it => it.type === 'one_time')
+    .reduce((sum, it) => it.included ? sum + (parseFloat(it.cost) * parseFloat(it.quantity)) : sum, 0);
+
+  const TableRow = ({ item, onChange, showPeriodicity = false }) => (
+    <div className={`grid grid-cols-12 gap-4 items-center p-3 border-b border-gray-50 hover:bg-gray-50 transition-colors ${!item.included ? 'opacity-50' : ''}`}>
+        <div className="col-span-1 flex justify-center">
+            <input type="checkbox" className="h-4 w-4 text-primary rounded border-gray-300 focus:ring-primary" checked={item.included} onChange={() => onChange(item.id, 'included', !item.included)} />
+        </div>
+        <div className="col-span-5 text-sm font-medium text-gray-700 break-words">
+            {item.name}
+            {item.description && <p className="text-[10px] text-gray-400 font-normal leading-tight mt-0.5">{item.description}</p>}
+        </div>
+        <div className="col-span-2">
+            <input type="number" min="0" className="w-full text-center text-sm border-gray-200 rounded-md focus:border-primary focus:ring-primary" value={item.quantity} onChange={(e) => onChange(item.id, 'quantity', e.target.value)} />
+        </div>
+        <div className="col-span-2">
+            <div className="relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none"><span className="text-gray-500 sm:text-xs">R$</span></div>
+                <input type="number" min="0" step="0.01" className="w-full pl-7 text-sm border-gray-200 rounded-md focus:border-primary focus:ring-primary" value={item.cost} onChange={(e) => onChange(item.id, 'cost', e.target.value)} />
+            </div>
+        </div>
+        <div className="col-span-2 text-right">
+             <span className="text-sm font-bold text-gray-800">
+                R$ {((parseFloat(item.cost) || 0) * (parseFloat(item.quantity) || 0) / (showPeriodicity ? (parseFloat(item.periodicity) || 1) : 1)).toFixed(0)}
+             </span>
+             {showPeriodicity && item.periodicity > 1 && <span className="block text-[10px] text-gray-400">/mês (a cada {item.periodicity} meses)</span>}
+        </div>
+    </div>
+  );
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-primary mb-4">Planejamento financeiro</h2>
-      {/* Section: Pregnancy items */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h3 className="font-semibold text-lg mb-3">Durante a gravidez</h3>
-        <p className="text-sm text-gray-600 mb-2">
-          Ajuste quantidade, periodicidade e valor de cada consulta, exame ou compra única
-          realizada antes do parto. A periodicidade indica em quantos meses o valor
-          indicado se repete (1 = mensal; para itens únicos mantenha 1).
-        </p>
-        <div className="hidden md:flex font-semibold text-xs text-gray-600 pb-2 border-b mb-2">
-          <div className="w-6">&nbsp;</div>
-          <div className="flex-grow">Item</div>
-          <div className="w-16 text-center">Qtde</div>
-          <div className="w-20 text-center">Período</div>
-          <div className="w-20 text-center">Valor (R$)</div>
-          <div className="w-24 text-center">Subtotal (R$)</div>
+    <div className="space-y-8">
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Financeiro</h2>
+      
+      {/* Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-pink-500 to-rose-400 rounded-2xl p-5 text-white shadow-lg">
+            <p className="text-pink-100 text-xs font-bold uppercase tracking-wide mb-1">Gestação (Investimento)</p>
+            <h3 className="text-3xl font-bold">R$ {pregnancyTotal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</h3>
+            <p className="text-xs text-pink-100 mt-2 opacity-80">Enxoval inicial, Exames, Móveis</p>
         </div>
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {pregnancyItems.map((it) => (
-            <div key={it.id} className="flex flex-col md:flex-row items-start md:items-center text-sm">
-              <div className="flex items-center w-full md:w-auto md:mr-2 mb-1 md:mb-0">
-                <input
-                  type="checkbox"
-                  className="mr-2"
-                  checked={it.included}
-                  onChange={() => handlePregChange(it.id, 'included', !it.included)}
-                />
-                <span className="flex-grow md:w-64 pr-2 break-words">{it.name}</span>
-              </div>
-              <div className="flex w-full md:w-auto md:space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  className="border rounded w-16 px-1 text-center mb-1 md:mb-0"
-                  value={it.quantity}
-                  onChange={(e) => handlePregChange(it.id, 'quantity', e.target.value)}
-                />
-                <input
-                  type="number"
-                  min="1"
-                  className="border rounded w-20 px-1 text-center mb-1 md:mb-0"
-                  value={it.periodicity}
-                  onChange={(e) => handlePregChange(it.id, 'periodicity', e.target.value)}
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="border rounded w-20 px-1 text-center mb-1 md:mb-0"
-                  value={it.cost}
-                  onChange={(e) => handlePregChange(it.id, 'cost', e.target.value)}
-                />
-                <span className="w-24 text-right font-medium">
-                  R$ {((parseFloat(it.cost) || 0) * (parseFloat(it.quantity) || 0) / (parseFloat(it.periodicity) || 1)).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+             <p className="text-gray-500 text-xs font-bold uppercase tracking-wide mb-1">Pós-Parto (Custo Mensal)</p>
+             <h3 className="text-3xl font-bold text-gray-800">R$ {afterBirthMonthlyTotal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</h3>
+             <p className="text-xs text-gray-400 mt-2">Média mensal (Fraldas, Alimentação, Roupas)</p>
         </div>
-        <div className="mt-4 text-right font-bold text-primary">
-          Total: R$ {pregnancyTotal.toFixed(2)}
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+             <p className="text-blue-500 text-xs font-bold uppercase tracking-wide mb-1">Pós-Parto (Compras Futuras)</p>
+             <h3 className="text-3xl font-bold text-gray-800">R$ {afterBirthOneTimeTotal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</h3>
+             <p className="text-xs text-gray-400 mt-2">Bens duráveis, Eletrônicos, Hobbies</p>
         </div>
       </div>
-      {/* Section: After birth items */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <h3 className="font-semibold text-lg mb-3">Após o nascimento (mensal)</h3>
-        <p className="text-sm text-gray-600 mb-2">
-          Ajuste quantidade, periodicidade e valor de cada item recorrente após o nascimento.
-          O custo mensal será calculado como (valor × quantidade) dividido pela
-          periodicidade em meses.
-        </p>
-        <div className="hidden md:flex font-semibold text-xs text-gray-600 pb-2 border-b mb-2">
-          <div className="w-6">&nbsp;</div>
-          <div className="flex-grow">Item</div>
-          <div className="w-16 text-center">Qtde</div>
-          <div className="w-20 text-center">Período</div>
-          <div className="w-20 text-center">Valor (R$)</div>
-          <div className="w-24 text-center">Subtotal (R$)</div>
-        </div>
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {afterBirthItems.map((it) => (
-            <div key={it.id} className="flex flex-col md:flex-row items-start md:items-center text-sm">
-              <div className="flex items-center w-full md:w-auto md:mr-2 mb-1 md:mb-0">
-                <input
-                  type="checkbox"
-                  className="mr-2"
-                  checked={it.included}
-                  onChange={() => handleAfterChange(it.id, 'included', !it.included)}
-                />
-                <span className="flex-grow md:w-64 pr-2 break-words">{it.name}</span>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Coluna 1: Gestação */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-fit">
+              <div className="bg-pink-50 px-4 py-3 border-b border-pink-100">
+                  <h3 className="font-bold text-pink-800">Durante a Gravidez (Lista Inicial)</h3>
               </div>
-              <div className="flex w-full md:w-auto md:space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  className="border rounded w-16 px-1 text-center mb-1 md:mb-0"
-                  value={it.quantity}
-                  onChange={(e) => handleAfterChange(it.id, 'quantity', e.target.value)}
-                />
-                <input
-                  type="number"
-                  min="1"
-                  className="border rounded w-20 px-1 text-center mb-1 md:mb-0"
-                  value={it.periodicity}
-                  onChange={(e) => handleAfterChange(it.id, 'periodicity', e.target.value)}
-                />
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="border rounded w-20 px-1 text-center mb-1 md:mb-0"
-                  value={it.cost}
-                  onChange={(e) => handleAfterChange(it.id, 'cost', e.target.value)}
-                />
-                <span className="w-24 text-right font-medium">
-                  R$ {((parseFloat(it.cost) || 0) * (parseFloat(it.quantity) || 0) / (parseFloat(it.periodicity) || 1)).toFixed(2)}
-                </span>
+              <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+                {pregnancyItems.map(it => <TableRow key={it.id} item={it} onChange={handlePregChange} />)}
               </div>
+          </div>
+
+          {/* Coluna 2: Pós-Nascimento */}
+          <div className="space-y-6">
+            
+            {/* Tabela Recorrente */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-green-50 px-4 py-3 border-b border-green-100 flex justify-between items-center">
+                    <h3 className="font-bold text-green-800">Pós-Nascimento: Recorrente</h3>
+                    <span className="text-xs bg-white text-green-700 px-2 py-1 rounded border border-green-200">Consumo Contínuo</span>
+                </div>
+                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    {afterBirthItems.filter(i => i.type === 'recurring').map(it => <TableRow key={it.id} item={it} onChange={handleAfterChange} showPeriodicity={true} />)}
+                </div>
             </div>
-          ))}
-        </div>
-        <div className="mt-4 text-right font-bold text-primary">
-          Total mensal: R$ {afterBirthTotal.toFixed(2)}
-        </div>
+
+            {/* Tabela Compra Única */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
+                    <h3 className="font-bold text-blue-800">Pós-Nascimento: Compras Futuras</h3>
+                    <span className="text-xs bg-white text-blue-700 px-2 py-1 rounded border border-blue-200">Bens Duráveis</span>
+                </div>
+                <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    {afterBirthItems.filter(i => i.type === 'one_time').map(it => <TableRow key={it.id} item={it} onChange={handleAfterChange} />)}
+                </div>
+            </div>
+
+          </div>
       </div>
-      {/* Inventory list retained for reference */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="font-semibold text-lg mb-3">Inventário de itens do bebê (referência)</h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Esta lista orientativa mostra compras essenciais. Itens únicos devem ser adquiridos
-          antes do parto; itens recorrentes precisam de reposição regular após o nascimento.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Before birth list */}
-          <div>
-            <h4 className="font-semibold text-primary mb-2">Antes do nascimento (compra única)</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-              {Object.entries(BABY_ITEMS_CHECKLIST_PRIORITIZED).flatMap(([category, list]) =>
-                list
-                  .filter((it) => {
-                    // Determine if item is one‑time
-                    const lower = it.item.toLowerCase();
-                    let recurring = false;
-                    if (category === 'diapering_and_hygiene') {
-                      if (lower.includes('fraldas') || lower.includes('lenços') || lower.includes('pomada')) recurring = true;
-                    }
-                    if (category === 'feeding') {
-                      if (lower.includes('paninhos')) recurring = true;
-                    }
-                    if (category === 'clothing') recurring = true;
-                    return !recurring;
-                  })
-                  .map((it) => (
-                    <li key={it.item} className="flex flex-col">
-                      <span>
-                        <strong>{it.item}</strong> – {it.note}
-                      </span>
-                      <span className="text-xs text-gray-500">Prioridade: {it.priority}</span>
-                    </li>
-                  ))
-              )}
-            </ul>
-          </div>
-          {/* After birth list */}
-          <div>
-            <h4 className="font-semibold text-primary mb-2">Após o nascimento (reposição mensal)</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-              {Object.entries(BABY_ITEMS_CHECKLIST_PRIORITIZED).flatMap(([category, list]) =>
-                list
-                  .filter((it) => {
-                    const lower = it.item.toLowerCase();
-                    let recurring = false;
-                    if (category === 'diapering_and_hygiene') {
-                      if (lower.includes('fraldas') || lower.includes('lenços') || lower.includes('pomada')) recurring = true;
-                    }
-                    if (category === 'feeding') {
-                      if (lower.includes('paninhos')) recurring = true;
-                    }
-                    if (category === 'clothing') recurring = true;
-                    return recurring;
-                  })
-                  .map((it) => (
-                    <li key={it.item} className="flex flex-col">
-                      <span>
-                        <strong>{it.item}</strong>
-                      </span>
-                      <span className="text-xs text-gray-500">{it.note}</span>
-                    </li>
-                  ))
-              )}
-            </ul>
-          </div>
+
+      {/* Inventário de Referência (3 Colunas) */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mt-6">
+        <h3 className="text-xl font-bold text-gray-800 mb-4">Inventário de Referência (Priorizado)</h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            {/* Coluna 1 */}
+            <div>
+                <h4 className="font-bold text-primary mb-3">Antes do Nascimento (Essenciais)</h4>
+                <ul className="space-y-3">
+                    {Object.entries(BABY_ITEMS_CHECKLIST_PRIORITIZED).flatMap(([cat, list]) => list.filter(it => !it.item.toLowerCase().includes('fralda') && !it.item.toLowerCase().includes('lenço')).map(it => (
+                        <li key={it.item} className="text-sm border-b border-gray-50 pb-2 last:border-0">
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-gray-700">{it.item}</span>
+                                <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">{it.priority}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 italic">{it.note}</p>
+                        </li>
+                    )))}
+                </ul>
+            </div>
+
+            {/* Coluna 2 */}
+            <div>
+                <h4 className="font-bold text-green-700 mb-3">Consumíveis & Recorrentes</h4>
+                 <ul className="space-y-3">
+                    {afterBirthItems.filter(i => i.type === 'recurring').map(it => (
+                        <li key={it.id} className="text-sm border-b border-gray-50 pb-2 last:border-0">
+                            <span className="font-semibold text-gray-700">{it.name}</span>
+                            {it.description && <p className="text-xs text-gray-500 mt-1 italic">{it.description}</p>}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Coluna 3 - Nova */}
+            <div>
+                <h4 className="font-bold text-blue-700 mb-3">Pós-Nascimento (Única Vez)</h4>
+                 <ul className="space-y-3">
+                    {afterBirthItems.filter(i => i.type === 'one_time').map(it => (
+                        <li key={it.id} className="text-sm border-b border-gray-50 pb-2 last:border-0">
+                            <span className="font-semibold text-gray-700">{it.name}</span>
+                            {it.description && <p className="text-xs text-gray-500 mt-1 italic">{it.description}</p>}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
         </div>
       </div>
     </div>
