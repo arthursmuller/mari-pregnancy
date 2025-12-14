@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles can be added here.  The Tailwind utility classes
+ * throughout the components define most of the layout and colour
+ * scheme.  Feel free to tweak or extend the theme in
+ * `tailwind.config.js`.
+ */
