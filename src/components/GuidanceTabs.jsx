@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  DIETARY_GUIDELINES_DETAILED,
   EXERCISE_GUIDELINES,
   MEDICATION_GUIDE_BRAZIL,
   CRITICAL_ALERTS_AND_HIGHLIGHTS,
@@ -8,8 +7,7 @@ import {
   EXAM_PLAN_TO_FIND_KNOWN_PROBLEMS_EARLY,
 } from '../data';
 
-// --- CONSTANTS & NEW DATA ---
-
+// --- CONSTANTS & NEW DATA (Mantido do seu arquivo original) ---
 const NEONATAL_RISKS_DATA = {
   A: { 
     title: "A. Emergências de Risco Imediato", 
@@ -57,35 +55,15 @@ const NATURAL_PREVENTION_TIPS = [
     "Fracionar Refeições: Comer pouco e sempre evita hipoglicemia (tontura) e azia severa."
 ];
 
-const PARENTING_GUIDE = {
-    spoiled: [
-        "Ensine o valor da espera: Não atenda desejos imediatamente se não for necessidade básica.",
-        "Lidar com frustrações: O 'não' é um ato de amor. Deixe a criança lidar com pequenas frustrações.",
-        "Valor do dinheiro: Desde cedo, explique que as coisas têm custo e exigem trabalho.",
-        "Educação e Respeito: "
-    ],
-    skills: [
-        "Música: Violão/Piano ajudam na matemática e sensibilidade.",
-        "Esportes: Tênis, Boxe e Futebol para disciplina, coordenação e resiliência.",
-        "Intelecto: Inglês desde cedo e Lógica de Programação para resolução de problemas."
-    ],
-    negative_attitudes: [
-        "Inconsistência: Hora pode, hora não pode (confunde a criança).",
-        "Desautorizar o parceiro: Tirar a autoridade do pai/mãe na frente do filho.",
-        "Excesso de Telas: Substituir tempo de qualidade por tablets/celulares.",
-        "Superproteção: Impedir que a criança resolva pequenos problemas sozinha."
-    ]
-};
 
 export default function GuidanceTabs() {
   const tabs = [
     { id: 'exercise', label: 'Exercícios', icon: '🏃‍♀️' },
-    { id: 'diet', label: 'Dieta', icon: '🥗' },
     { id: 'risks', label: 'Riscos', icon: '⚠️' },
     { id: 'meds', label: 'Remédios', icon: '💊' },
-    { id: 'tips', label: 'Dicas & Educação', icon: '💡' },
+    { id: 'tips', label: 'Dicas antes de nascer', icon: '💡' },
   ];
-  const [activeTab, setActiveTab] = useState('risks');
+  const [activeTab, setActiveTab] = useState('diet'); // Default para Nutrição para visualizar as mudanças
 
   return (
     <div className="w-full">
@@ -188,67 +166,6 @@ export default function GuidanceTabs() {
                  )}
              </div>
            </div>
-        )}
-
-        {/* ================= DIET TAB ================= */}
-        {activeTab === 'diet' && (
-            <div className="space-y-6">
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-3xl border border-green-100 shadow-sm flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <h4 className="font-bold text-green-800 text-lg mb-1 flex items-center gap-2"><span className="text-2xl">🥑</span> Dieta {DIETARY_GUIDELINES_DETAILED.type}</h4>
-                        <p className="text-sm text-green-700 max-w-2xl">{DIETARY_GUIDELINES_DETAILED.specific_nutrient_targets}</p>
-                    </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div className="glass-card p-6 bg-green-50/30 border-green-100">
-                        <h4 className="font-bold text-green-600 border-b border-green-200 pb-3 mb-4 text-lg">O que comer (Exemplos)</h4>
-                        <ul className="space-y-3">
-                            {DIETARY_GUIDELINES_DETAILED.consume.map(i => (
-                                <li key={i} className="flex items-center text-sm text-gray-700 bg-white/60 p-2 rounded-lg shadow-sm">
-                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>{i}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="glass-card p-6 bg-red-50/30 border-red-100">
-                        <h4 className="font-bold text-red-500 border-b border-red-200 pb-3 mb-4 text-lg">O que evitar (Exemplos)</h4>
-                        <ul className="space-y-3">
-                            {DIETARY_GUIDELINES_DETAILED.avoid.map(i => (
-                                <li key={i} className="flex items-center text-sm text-gray-700 bg-white/60 p-2 rounded-lg shadow-sm">
-                                    <span className="w-2 h-2 bg-red-500 rounded-full mr-3"></span>{i}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="glass-card p-8">
-                    <h4 className="font-bold text-gray-800 mb-6 text-lg">Notas Importantes & Mitos</h4>
-                    <div className="grid md:grid-cols-2 gap-6 text-sm">
-                        <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100">
-                            <span className="font-bold text-amber-800 block mb-2 text-base">🚫 Mito Calórico</span>
-                            <p className="text-gray-600 leading-relaxed">{DIETARY_GUIDELINES_DETAILED.notes.caloric_myth}</p>
-                        </div>
-                        <div className="bg-purple-50 p-5 rounded-2xl border border-purple-100">
-                            <span className="font-bold text-purple-800 block mb-2 text-base">🥗 Foco Vegetariano</span>
-                            <p className="text-gray-600 leading-relaxed">{DIETARY_GUIDELINES_DETAILED.notes.vegetarian_focus}</p>
-                        </div>
-                        {DIETARY_GUIDELINES_DETAILED.notes.hydration_and_water_info && (
-                            <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 md:col-span-2">
-                                <span className="font-bold block mb-2 text-blue-800 text-base">💧 Hidratação</span>
-                                <p className="text-gray-600 leading-relaxed">{DIETARY_GUIDELINES_DETAILED.notes.hydration_and_water_info}</p>
-                            </div>
-                        )}
-                        {DIETARY_GUIDELINES_DETAILED.notes.sweets_guidance && (
-                             <div className="bg-pink-50 p-5 rounded-2xl border border-pink-100 md:col-span-2">
-                                <span className="font-bold block mb-2 text-pink-800 text-base">🍬 Doces e Açúcar</span>
-                                <p className="text-gray-600 leading-relaxed">{DIETARY_GUIDELINES_DETAILED.notes.sweets_guidance}</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
         )}
 
         {/* ================= RISKS TAB ================= */}
@@ -433,71 +350,6 @@ export default function GuidanceTabs() {
             </div>
         )}
 
-        {/* ================= TIPS & PARENTING TAB ================= */}
-        {activeTab === 'tips' && (
-             <div className="space-y-8">
-                 {/* Ambiente Pós-Parto */}
-                 <div className="glass-card p-8 bg-gradient-to-br from-white to-gray-50">
-                     <h4 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2"><span className="text-2xl">🏡</span> Ambiente e Bem-estar</h4>
-                     <p className="text-sm text-gray-600 leading-relaxed mb-4">Crie um ambiente calmo, seguro e previsível para o recém‑nascido. Mantenha a casa livre de fumaça e evite ruídos excessivos. Fale, cante e leia para o bebê – ele reconhece vozes familiares e sente‑se seguro com a sua presença.</p>
-                     <div className="flex gap-4 flex-wrap">
-                         <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">Sono Seguro (Barriga para cima)</span>
-                         <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">Sem fumaça</span>
-                         <span className="bg-pink-50 text-pink-700 px-3 py-1 rounded-full text-xs font-medium">Vozes Familiares</span>
-                     </div>
-                 </div>
-
-                 {/* Guia de Educação (NEW CONTENT) */}
-                 <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-8 rounded-3xl border border-indigo-100 shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-200/20 rounded-full blur-3xl -mr-20 -mt-20"></div>
-                    <h4 className="font-bold text-indigo-900 text-xl mb-6 relative z-10 flex items-center gap-2"><span className="text-2xl">🎓</span> Guia de Educação (O Futuro)</h4>
-                    
-                    <div className="grid md:grid-cols-2 gap-8 relative z-10">
-                        <div className="bg-white/60 p-6 rounded-2xl shadow-sm border border-indigo-50">
-                            <h5 className="font-bold text-indigo-700 mb-3 border-b border-indigo-100 pb-2">Como não criar filhos mimados</h5>
-                            <ul className="space-y-3">
-                                {PARENTING_GUIDE.spoiled.map((tip, i) => (
-                                    <li key={i} className="flex items-start text-sm text-gray-700"><span className="text-indigo-400 mr-2 mt-0.5">🔹</span>{tip}</li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        <div className="space-y-6">
-                             <div className="bg-white/60 p-6 rounded-2xl shadow-sm border border-emerald-50">
-                                <h5 className="font-bold text-emerald-700 mb-3 border-b border-emerald-100 pb-2">Habilidades & Esportes</h5>
-                                <ul className="space-y-2">
-                                    {PARENTING_GUIDE.skills.map((skill, i) => (
-                                        <li key={i} className="text-sm text-gray-700 flex items-center"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mr-2"></span>{skill}</li>
-                                    ))}
-                                </ul>
-                             </div>
-
-                             <div className="bg-red-50/60 p-6 rounded-2xl shadow-sm border border-red-50">
-                                <h5 className="font-bold text-red-700 mb-3 border-b border-red-100 pb-2">Atitudes que Impactam Negativamente</h5>
-                                <ul className="space-y-2">
-                                    {PARENTING_GUIDE.negative_attitudes.map((att, i) => (
-                                        <li key={i} className="text-sm text-gray-700 flex items-center"><span className="text-red-400 mr-2 font-bold">×</span>{att}</li>
-                                    ))}
-                                </ul>
-                             </div>
-                        </div>
-                    </div>
-                 </div>
-
-                 <div className="glass-card p-6 bg-rose-50/30 border-rose-100">
-                     <h4 className="font-bold text-rose-600 mb-4 flex items-center gap-2"><span className="text-xl">⛑️</span> Primeiros Socorros Básicos</h4>
-                     <p className="text-sm text-gray-600 mb-4"><strong>Sinais de Emergência:</strong> Febre &gt;38°C (ou qualquer febre em &lt;3 meses), recusa em mamar, choro inconsolável, fontanela (moleira) afundada, lábios roxos.</p>
-                     <div className="bg-white/70 p-4 rounded-2xl border border-rose-100 flex flex-wrap gap-2 text-xs text-gray-600">
-                         <span className="font-bold text-rose-700 mr-2">Kit Essencial:</span>
-                         <span className="bg-rose-100 px-2 py-1 rounded text-rose-800">Termômetro digital</span>
-                         <span className="bg-rose-100 px-2 py-1 rounded text-rose-800">Antisséptico</span>
-                         <span className="bg-rose-100 px-2 py-1 rounded text-rose-800">Aspirador nasal</span>
-                         <span className="bg-rose-100 px-2 py-1 rounded text-rose-800">Álcool 70%</span>
-                         <span className="bg-rose-100 px-2 py-1 rounded text-rose-800">Solução salina</span>
-                     </div>
-                 </div>
-             </div>
-        )}
       </div>
     </div>
   );

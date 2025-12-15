@@ -8,6 +8,9 @@ const sections = [
   { id: 'guidance', label: 'Guia' },
   { id: 'medic-team', label: 'Equipe' },
   { id: 'tasks', label: 'Tarefas' },
+  { id: 'vaccines', label: 'Vacinas' },
+  { id: 'after-born', label: 'Pós parto' },
+  { id: 'medical-record', label: 'Prontuário' }, // <--- NOVO
 ];
 
 export default function Navbar() {

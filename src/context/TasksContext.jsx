@@ -1,13 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { allTasks, weeklyData } from '../data';
 
-// Version constant for seeding initial tasks. When you change the
-// logic for generating default tasks or modify the structure of
-// generalTasks/cronogramTasks, bump this number. This allows the
-// application to know when it should reseed localStorage instead
-// of using stale data. See the initialization effect for usage.
-// UPDATE: Bumped to 2 to include new scheduling tasks.
-const TASKS_SEED_VERSION = 2;
+// Version constant for seeding initial tasks.
+// UPDATE: Bumped to 3 to include 'category' field for Medical Team tile logic.
+const TASKS_SEED_VERSION = 3;
 
 // Create a context to manage general tasks and cronogram tasks across the app.
 
@@ -15,14 +11,24 @@ const TasksContext = createContext();
 
 /**
  * Derive initial general tasks and cronogram tasks from the static
- * allTasks list. General tasks are deduplicated by description and
- * contain an id, description, type and optional dueDate. Cronogram
- * tasks reference a generalTaskId and keep track of week, due dates
- * and status. They can later override their due date individually.
+ * allTasks list. General tasks are deduplicated by description.
  */
 function deriveInitialTasks() {
   const generalTaskMap = {};
   let generalId = 1;
+
+  // Helper to categorize tasks automatically based on description
+  const categorizeTask = (desc) => {
+    const d = desc.toLowerCase();
+    if (d.includes('consulta') || d.includes('obstetra') || d.includes('pediatra') || d.includes('nutricionista') || d.includes('dentista') || d.includes('médico') || d.includes('fisioterapeuta') || d.includes('anestesiologista')) {
+      return 'medical';
+    }
+    if (d.includes('ultrassom') || d.includes('exame') || d.includes('teste') || d.includes('coleta') || d.includes('laboratório')) {
+      return 'exam';
+    }
+    return 'general';
+  };
+
   // Build a map of description -> general task
   allTasks.forEach((t) => {
     const desc = t.description.trim();
@@ -31,14 +37,15 @@ function deriveInitialTasks() {
         id: generalId++,
         description: desc,
         type: t.type || 'Única',
-        dueDate: null, // initial due date is undefined; user can set later
+        category: categorizeTask(desc), // New field
+        dueDate: null,
         done: false,
-        // track soft deletion status on general tasks
         deleted: false,
       };
     }
   });
   const generalTasks = Object.values(generalTaskMap);
+  
   // Build cronogram tasks referencing general tasks
   let cronId = 1;
   const cronogramTasks = allTasks.map((t) => {
@@ -48,22 +55,19 @@ function deriveInitialTasks() {
       id: cronId++,
       generalTaskId: gTask.id,
       week: t.week,
-      // Use the default dueDate from allTasks; this will be overridden
-      // by the general task dueDate if set, or by individual overrides
       baseDueDate: t.dueDate || null,
       overrideDueDate: null,
       done: t.done || false,
       closed: false,
       actionTaken: '',
       type: gTask.type,
-      // track soft deletion for cronogram tasks
+      category: gTask.category, // Mirror category here for easier filtering
       deleted: false,
     };
   });
 
   /**
-   * Helper to compute a due date (ISO string) from a week number using
-   * weeklyData. It returns the end date of the week as in the schedule.
+   * Helper to compute a due date (ISO string)
    */
   function getWeekDueDate(weekNumber) {
     const weekItem = weeklyData.find((w) => w.weekNumber === weekNumber);
@@ -75,18 +79,8 @@ function deriveInitialTasks() {
     const endPart = parts[1].trim();
     const [dayStr, monthStr] = endPart.split(' ');
     const monthMap = {
-      Jan: 0,
-      Feb: 1,
-      Mar: 2,
-      Apr: 3,
-      May: 4,
-      Jun: 5,
-      Jul: 6,
-      Aug: 7,
-      Sep: 8,
-      Oct: 9,
-      Nov: 10,
-      Dec: 11,
+      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
     };
     const monthKey = monthStr?.replace('.', '') ?? '';
     const m = monthMap[monthKey];
@@ -113,89 +107,83 @@ function deriveInitialTasks() {
     }
   });
 
-  // Additional tasks to enrich the schedule (appointments and preparations)
-  // Enhanced to include "Scheduling" tasks prior to the actual events
+  // Additional tasks to enrich the schedule
   const extraTasksByWeek = {
     4: [
-      { desc: 'Ligar para marcar consulta inicial com Obstetra', type: 'Única' },
-      { desc: 'Agendar consulta com Nutricionista (Dieta Vegetariana)', type: 'Única' },
-      { desc: 'Verificar laboratórios cobertos pelo plano para exames de sangue', type: 'Única' },
+      { desc: 'Ligar para marcar consulta inicial com Obstetra', type: 'Única', category: 'general' },
+      { desc: 'Agendar consulta com Nutricionista (Dieta Vegetariana)', type: 'Única', category: 'general' },
+      { desc: 'Verificar laboratórios cobertos pelo plano para exames de sangue', type: 'Única', category: 'general' },
     ],
     5: [
-      { desc: 'Comparecer à consulta com Nutricionista', type: 'Única' },
-      { desc: 'Comparecer à consulta com Obstetra', type: 'Única' },
-      { desc: 'Realizar exames de sangue iniciais', type: 'Única' },
-      { desc: 'Marcar retorno com Obstetra', type: 'Única' },
-      { desc: 'Marcar consulta com Ginecologista', type: 'Única' },
-      { desc: 'Marcar retorno com Nutricionista', type: 'Única' },
+      { desc: 'Comparecer à consulta com Nutricionista', type: 'Única', category: 'medical' },
+      { desc: 'Comparecer à consulta com Obstetra', type: 'Única', category: 'medical' },
+      { desc: 'Realizar exames de sangue iniciais', type: 'Única', category: 'exam' },
+      { desc: 'Marcar retorno com Obstetra', type: 'Única', category: 'general' },
+      { desc: 'Marcar consulta com Ginecologista', type: 'Única', category: 'general' },
     ],
     10: [
-       { desc: 'Ligar para agendar Ultrassom Translucência Nucal (para Sem 12)', type: 'Única' },
-       { desc: 'Agendar consulta de Medicina Fetal', type: 'Única' },
-       { desc: 'Falar com mãe para pegar itens meus de criança', type: 'Única' },
+       { desc: 'Ligar para agendar Ultrassom Translucência Nucal (para Sem 12)', type: 'Única', category: 'general' },
+       { desc: 'Agendar consulta de Medicina Fetal', type: 'Única', category: 'general' },
     ],
     11: [
-      { desc: 'Confirmar agendamento Translucência Nucal', type: 'Única' },
+      { desc: 'Confirmar agendamento Translucência Nucal', type: 'Única', category: 'general' },
     ],
     12: [
-      { desc: 'Realizar Ultrassom Translucência Nucal', type: 'Única' },
-      { desc: 'Comparecer consulta de Medicina Fetal', type: 'Única' },
-      { desc: 'Agendar consulta de rotina Obstetra (Mensal)', type: 'Periódica' },
+      { desc: 'Realizar Ultrassom Translucência Nucal', type: 'Única', category: 'exam' },
+      { desc: 'Comparecer consulta de Medicina Fetal', type: 'Única', category: 'medical' },
+      { desc: 'Agendar consulta de rotina Obstetra (Mensal)', type: 'Periódica', category: 'general' },
     ],
     16: [
-      // Preparing for week 20-22 exams (Morphological is hard to schedule, do it early)
-      { desc: 'Ligar para agendar Ultrassom Morfológico (para Sem 21)', type: 'Única' },
-      { desc: 'Agendar Ecocardiograma Fetal (se solicitado)', type: 'Única' },
+      { desc: 'Ligar para agendar Ultrassom Morfológico (para Sem 21)', type: 'Única', category: 'general' },
+      { desc: 'Agendar Ecocardiograma Fetal (se solicitado)', type: 'Única', category: 'general' },
     ],
     18: [
-       { desc: 'Agendar consulta de retorno Nutricionista (Ajuste 2º Tri)', type: 'Única' },
+       { desc: 'Agendar consulta de retorno Nutricionista (Ajuste 2º Tri)', type: 'Única', category: 'general' },
     ],
     20: [
-      { desc: 'Agendar consulta com Dentista (Check-up)', type: 'Única' },
-      { desc: 'Pesquisar e agendar cursos de preparação para o parto', type: 'Única' },
+      { desc: 'Agendar consulta com Dentista (Check-up)', type: 'Única', category: 'general' },
+      { desc: 'Pesquisar e agendar cursos de preparação para o parto', type: 'Única', category: 'general' },
     ],
     21: [
-      { desc: 'Realizar Ultrassom Morfológico', type: 'Única' },
-      { desc: 'Comparecer consulta com Dentista', type: 'Única' },
+      { desc: 'Realizar Ultrassom Morfológico', type: 'Única', category: 'exam' },
+      { desc: 'Comparecer consulta com Dentista', type: 'Única', category: 'medical' },
     ],
     23: [
-        // Preparing for Week 24-26 exams
-        { desc: 'Agendar Teste de Tolerância à Glicose (Curva Glicêmica)', type: 'Única' },
-        { desc: 'Verificar onde tomar vacinas dTpa e Influenza', type: 'Única' },
+        { desc: 'Agendar Teste de Tolerância à Glicose (Curva Glicêmica)', type: 'Única', category: 'general' },
+        { desc: 'Verificar onde tomar vacinas dTpa e Influenza', type: 'Única', category: 'general' },
     ],
     24: [
-      { desc: 'Marcar vacinas dTpa e Influenza (se ainda não agendou)', type: 'Única' },
+      { desc: 'Marcar vacinas dTpa e Influenza (se ainda não agendou)', type: 'Única', category: 'general' },
     ],
     26: [
-      { desc: 'Realizar Teste de Tolerância à Glicose', type: 'Única' },
-      { desc: 'Tomar vacinas dTpa e Influenza', type: 'Única' },
-      { desc: 'Agendar retorno Nutricionista (Ajuste Final 3º Tri)', type: 'Única' },
+      { desc: 'Realizar Teste de Tolerância à Glicose', type: 'Única', category: 'exam' },
+      { desc: 'Tomar vacinas dTpa e Influenza', type: 'Única', category: 'medical' }, // tecnicamente medical procedure
+      { desc: 'Agendar retorno Nutricionista (Ajuste Final 3º Tri)', type: 'Única', category: 'general' },
     ],
     28: [
-      // Preparing for late exams
-      { desc: 'Ligar para agendar Ultrassom 3º Trimestre (Doppler)', type: 'Única' },
-      { desc: 'Agendar consulta pré-natal com Pediatra', type: 'Única' },
-      { desc: 'Agendar visita à Maternidade', type: 'Única' },
+      { desc: 'Ligar para agendar Ultrassom 3º Trimestre (Doppler)', type: 'Única', category: 'general' },
+      { desc: 'Agendar consulta pré-natal com Pediatra', type: 'Única', category: 'general' },
+      { desc: 'Agendar visita à Maternidade', type: 'Única', category: 'general' },
     ],
     30: [
-      { desc: 'Comparecer consulta com Pediatra', type: 'Única' },
-      { desc: 'Realizar visita à Maternidade', type: 'Única' },
-      { desc: 'Lavar roupas do bebê e organizar enxoval', type: 'Única' },
-      { desc: 'Preparar mala da maternidade e instalar bebê conforto', type: 'Única' },
+      { desc: 'Comparecer consulta com Pediatra', type: 'Única', category: 'medical' },
+      { desc: 'Realizar visita à Maternidade', type: 'Única', category: 'general' },
+      { desc: 'Lavar roupas do bebê e organizar enxoval', type: 'Única', category: 'general' },
+      { desc: 'Preparar mala da maternidade e instalar bebê conforto', type: 'Única', category: 'general' },
     ],
     32: [
-        { desc: 'Agendar consulta com Anestesiologista (Avaliação pré-parto)', type: 'Única' },
-        { desc: 'Agendar Exame do Cotonete (para Sem 35-36)', type: 'Única' },
+        { desc: 'Agendar consulta com Anestesiologista (Avaliação pré-parto)', type: 'Única', category: 'general' },
+        { desc: 'Agendar Exame do Cotonete (para Sem 35-36)', type: 'Única', category: 'general' },
     ],
     35: [
-        { desc: 'Realizar Exame do Cotonete (Estreptococo B)', type: 'Única' },
+        { desc: 'Realizar Exame do Cotonete (Estreptococo B)', type: 'Única', category: 'exam' },
     ],
     36: [
-        { desc: 'Deixar agendadas consultas semanais com Obstetra até o parto', type: 'Única' },
+        { desc: 'Deixar agendadas consultas semanais com Obstetra até o parto', type: 'Única', category: 'general' },
     ],
     38: [
-      { desc: 'Comparecer consultas semanais com Obstetra', type: 'Única' },
-      { desc: 'Monitorar contrações e perda de líquido diariamente', type: 'Execução diária' },
+      { desc: 'Comparecer consultas semanais com Obstetra', type: 'Única', category: 'medical' },
+      { desc: 'Monitorar contrações e perda de líquido diariamente', type: 'Execução diária', category: 'general' },
     ],
   };
 
@@ -203,23 +191,24 @@ function deriveInitialTasks() {
     const week = parseInt(weekStr, 10);
     tasks.forEach((item) => {
       const desc = item.desc.trim();
-      // Ensure general task exists or create
       let gTask = generalTaskMap[desc];
       if (!gTask) {
         gTask = {
           id: generalId++,
           description: desc,
           type: item.type,
+          category: item.category || categorizeTask(desc),
           dueDate: null,
           done: false,
+          deleted: false,
         };
         generalTaskMap[desc] = gTask;
         generalTasks.push(gTask);
       } else {
-        // If general exists but type is different, update it to the most important type
         gTask.type = item.type;
+        if (item.category) gTask.category = item.category;
       }
-      // Add cronogram task
+      
       const dueIso = getWeekDueDate(week);
       cronogramTasks.push({
         id: cronId++,
@@ -231,6 +220,7 @@ function deriveInitialTasks() {
         closed: false,
         actionTaken: '',
         type: gTask.type,
+        category: gTask.category,
         deleted: false,
       });
     });
@@ -241,20 +231,9 @@ function deriveInitialTasks() {
 export function TasksProvider({ children }) {
   const [generalTasks, setGeneralTasks] = useState([]);
   const [cronogramTasks, setCronogramTasks] = useState([]);
-  // Track whether the initial load of tasks has completed. This
-  // prevents our persistence effects from writing empty arrays to
-  // localStorage before the tasks have been initialised.
   const [loaded, setLoaded] = useState(false);
 
-  // Initialize from localStorage or derive from default on first render
   useEffect(() => {
-    // When mounting, determine whether to use stored tasks or reseed
-    // them based on the seed version. If either seed version is
-    // missing or does not match TASKS_SEED_VERSION, we reseed by
-    // deriving defaults. Otherwise we load from localStorage. This
-    // prevents user-entered tasks from being overwritten by new
-    // releases of the app while still allowing us to introduce new
-    // default data when the version increases.
     try {
       const storedGeneralJson = localStorage.getItem('generalTasks');
       const storedCronoJson = localStorage.getItem('cronogramTasks');
@@ -263,28 +242,18 @@ export function TasksProvider({ children }) {
       const seedOk =
         generalSeed && parseInt(generalSeed, 10) === TASKS_SEED_VERSION &&
         cronoSeed && parseInt(cronoSeed, 10) === TASKS_SEED_VERSION;
-      if (
-        seedOk &&
-        storedGeneralJson && storedCronoJson
-      ) {
+      if (seedOk && storedGeneralJson && storedCronoJson) {
         const parsedGeneral = JSON.parse(storedGeneralJson);
         const parsedCrono = JSON.parse(storedCronoJson);
-        if (
-          Array.isArray(parsedGeneral) &&
-          Array.isArray(parsedCrono)
-        ) {
+        if (Array.isArray(parsedGeneral) && Array.isArray(parsedCrono)) {
           setGeneralTasks(parsedGeneral);
           setCronogramTasks(parsedCrono);
-          // signal that initial loading has completed
           setLoaded(true);
           return;
         }
       }
-    } catch (e) {
-      // fall through to reseed on any error
-    }
-    // Either version mismatch or no valid stored tasks: derive
-    // defaults and persist them along with the current seed version
+    } catch (e) { }
+
     const { generalTasks: defaultsGeneral, cronogramTasks: defaultsCronogram } = deriveInitialTasks();
     setGeneralTasks(defaultsGeneral);
     setCronogramTasks(defaultsCronogram);
@@ -293,84 +262,58 @@ export function TasksProvider({ children }) {
       localStorage.setItem('cronogramTasks', JSON.stringify(defaultsCronogram));
       localStorage.setItem('generalTasksSeed', TASKS_SEED_VERSION.toString());
       localStorage.setItem('cronogramTasksSeed', TASKS_SEED_VERSION.toString());
-    } catch (e) {
-      /* ignore localStorage errors */
-    }
-    // signal that initial loading has completed
+    } catch (e) { }
     setLoaded(true);
   }, []);
 
-  // Persist changes to localStorage. These effects are guarded by
-  // the `loaded` flag so they do not run until after the initial
-  // seeding has completed. Without this guard the first render
-  // would write empty arrays to localStorage, erasing any saved data.
   useEffect(() => {
     if (!loaded) return;
-    try {
-      localStorage.setItem('generalTasks', JSON.stringify(generalTasks));
-    } catch (e) {
-      /* ignore */
-    }
+    try { localStorage.setItem('generalTasks', JSON.stringify(generalTasks)); } catch (e) { }
   }, [generalTasks, loaded]);
 
   useEffect(() => {
     if (!loaded) return;
-    try {
-      localStorage.setItem('cronogramTasks', JSON.stringify(cronogramTasks));
-    } catch (e) {
-      /* ignore */
-    }
+    try { localStorage.setItem('cronogramTasks', JSON.stringify(cronogramTasks)); } catch (e) { }
   }, [cronogramTasks, loaded]);
 
-  /**
-   * Add a new general task. If a task with the same description already
-   * exists, reuse it instead of creating a duplicate. Returns the id
-   * of the general task.
-   */
-  const addGeneralTask = ({ description, type = 'Única', dueDate = null }) => {
+  const addGeneralTask = ({ description, type = 'Única', category = 'general', dueDate = null }) => {
     const trimmed = description.trim();
     if (!trimmed) return null;
-    // Check if exists
     const existing = generalTasks.find((t) => t.description.toLowerCase() === trimmed.toLowerCase());
     if (existing) return existing.id;
     const newId = (generalTasks.length ? Math.max(...generalTasks.map((t) => t.id)) : 0) + 1;
+    
+    // Auto categorize if not provided explicitly
+    let finalCat = category;
+    if (category === 'general') {
+       const d = trimmed.toLowerCase();
+       if (d.includes('consulta') || d.includes('médico') || d.includes('obstetra')) finalCat = 'medical';
+       else if (d.includes('exame') || d.includes('ultrassom')) finalCat = 'exam';
+    }
+
     const newTask = {
       id: newId,
       description: trimmed,
       type,
+      category: finalCat,
       dueDate,
       done: false,
       deleted: false,
     };
     setGeneralTasks((prev) => {
       const updated = [...prev, newTask];
-      // persist to localStorage immediately
-      try {
-        localStorage.setItem('generalTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore localStorage errors */
-      }
+      try { localStorage.setItem('generalTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
     return newId;
   };
 
-  /**
-   * Update a general task with new values. If dueDate changes it
-   * propagates to cronogram tasks that do not have individual overrides.
-   */
   const updateGeneralTask = (id, updates) => {
     setGeneralTasks((prev) => {
       const updatedGeneral = prev.map((task) => (task.id === id ? { ...task, ...updates } : task));
-      // persist to localStorage
-      try {
-        localStorage.setItem('generalTasks', JSON.stringify(updatedGeneral));
-      } catch (e) {
-        /* ignore */
-      }
+      try { localStorage.setItem('generalTasks', JSON.stringify(updatedGeneral)); } catch (e) { }
       return updatedGeneral;
     });
-    // If dueDate updated, propagate to cronogram tasks without override
     if (updates && Object.prototype.hasOwnProperty.call(updates, 'dueDate')) {
       const newDueDate = updates.dueDate;
       setCronogramTasks((prev) => {
@@ -380,72 +323,34 @@ export function TasksProvider({ children }) {
           }
           return ct;
         });
-        // persist to localStorage
-        try {
-          localStorage.setItem('cronogramTasks', JSON.stringify(updatedCrono));
-        } catch (e) {
-          /* ignore */
-        }
-        return updatedCrono;
-      });
-    }
-    // If type updated, propagate type to cronogram tasks
-    if (updates && Object.prototype.hasOwnProperty.call(updates, 'type')) {
-      const newType = updates.type;
-      setCronogramTasks((prev) => {
-        const updatedCrono = prev.map((ct) => (ct.generalTaskId === id ? { ...ct, type: newType } : ct));
-        try {
-          localStorage.setItem('cronogramTasks', JSON.stringify(updatedCrono));
-        } catch (e) {
-          /* ignore */
-        }
+        try { localStorage.setItem('cronogramTasks', JSON.stringify(updatedCrono)); } catch (e) { }
         return updatedCrono;
       });
     }
   };
 
-  /**
-   * Remove a general task. Also remove any cronogram tasks that
-   * reference it.
-   */
   const removeGeneralTask = (id) => {
-    // Soft-delete the general task and any associated cronogram tasks
     setGeneralTasks((prev) => {
-      const updated = prev.map((t) =>
-        t.id === id ? { ...t, deleted: true } : t,
-      );
-      try {
-        localStorage.setItem('generalTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore */
-      }
+      const updated = prev.map((t) => t.id === id ? { ...t, deleted: true } : t);
+      try { localStorage.setItem('generalTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
     setCronogramTasks((prev) => {
-      const updated = prev.map((ct) =>
-        ct.generalTaskId === id ? { ...ct, deleted: true } : ct,
-      );
-      try {
-        localStorage.setItem('cronogramTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore */
-      }
+      const updated = prev.map((ct) => ct.generalTaskId === id ? { ...ct, deleted: true } : ct);
+      try { localStorage.setItem('cronogramTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
   };
 
-  /**
-   * Add a cronogram task for a specific week and description/type. If
-   * a general task with the description exists it will be linked,
-   * otherwise a new general task is created. Returns the id of the
-   * created cronogram task.
-   */
-  const addCronogramTask = ({ description, type = 'Única', week, dueDate = null }) => {
+  const addCronogramTask = ({ description, type = 'Única', category = 'general', week, dueDate = null }) => {
     if (!description || !week) return null;
     const trimmed = description.trim();
-    let generalId = addGeneralTask({ description: trimmed, type, dueDate: null });
-    // Compute a unique cronogram id
+    let generalId = addGeneralTask({ description: trimmed, type, category, dueDate: null });
     const newCronId = (cronogramTasks.length ? Math.max(...cronogramTasks.map((ct) => ct.id)) : 0) + 1;
+    
+    // Fetch category from the created/found general task to ensure consistency
+    const gTask = generalTasks.find(g => g.id === generalId) || {};
+
     const newTask = {
       id: newCronId,
       generalTaskId: generalId,
@@ -456,60 +361,33 @@ export function TasksProvider({ children }) {
       closed: false,
       actionTaken: '',
       type,
+      category: gTask.category || category,
       deleted: false,
     };
     setCronogramTasks((prev) => {
       const updated = [...prev, newTask];
-      try {
-        localStorage.setItem('cronogramTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore */
-      }
+      try { localStorage.setItem('cronogramTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
     return newCronId;
   };
 
-  /**
-   * Update a cronogram task by id. Accepts partial updates. If
-   * overrideDueDate is provided, it sets that property.
-   */
   const updateCronogramTask = (id, updates) => {
     setCronogramTasks((prev) => {
       const updated = prev.map((ct) => (ct.id === id ? { ...ct, ...updates } : ct));
-      try {
-        localStorage.setItem('cronogramTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore */
-      }
+      try { localStorage.setItem('cronogramTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
   };
 
-  /**
-   * Remove a cronogram task by id.
-   */
   const removeCronogramTask = (id) => {
-    // Soft-delete the cronogram task
     setCronogramTasks((prev) => {
-      const updated = prev.map((ct) =>
-        ct.id === id ? { ...ct, deleted: true } : ct,
-      );
-      try {
-        localStorage.setItem('cronogramTasks', JSON.stringify(updated));
-      } catch (e) {
-        /* ignore */
-      }
+      const updated = prev.map((ct) => ct.id === id ? { ...ct, deleted: true } : ct);
+      try { localStorage.setItem('cronogramTasks', JSON.stringify(updated)); } catch (e) { }
       return updated;
     });
   };
 
-  /**
-   * Reset all tasks back to the default seed. This will discard any
-   * user-added or edited tasks. It also updates the seed version
-   * keys to the current TASKS_SEED_VERSION so that subsequent
-   * reloads will use these defaults.
-   */
   const resetTasks = () => {
     const { generalTasks: defaultsGeneral, cronogramTasks: defaultsCronogram } = deriveInitialTasks();
     setGeneralTasks(defaultsGeneral);
@@ -519,9 +397,7 @@ export function TasksProvider({ children }) {
       localStorage.setItem('cronogramTasks', JSON.stringify(defaultsCronogram));
       localStorage.setItem('generalTasksSeed', TASKS_SEED_VERSION.toString());
       localStorage.setItem('cronogramTasksSeed', TASKS_SEED_VERSION.toString());
-    } catch (e) {
-      /* ignore localStorage errors */
-    }
+    } catch (e) { }
   };
 
   return (
@@ -545,7 +421,6 @@ export function TasksProvider({ children }) {
   );
 }
 
-// Hook to use tasks context
 export function useTasks() {
   const ctx = useContext(TasksContext);
   if (!ctx) {

@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import {
+  DIETARY_GUIDELINES_DETAILED,
+} from '../data';
 import { useNutrition } from '../context/NutritionContext.jsx';
 
 const MEAL_OPTIONS = ['Café da Manhã', 'Almoço', 'Jantar', 'Lanche', 'Sobremesa'];
@@ -9,8 +12,8 @@ export default function NutritionPlan() {
   // State Foods
   const [newFood, setNewFood] = useState({ name: '', category: 'Proteína', nutrients: '', quantity: '', mealTypes: [], description: '' });
   
-  // State Supplements
-  const [newSup, setNewSup] = useState({ name: '', dosage: '', frequency: '', notes: '' });
+  // State Supplements (ADICIONADO CAMPO NUTRIENTS)
+  const [newSup, setNewSup] = useState({ name: '', dosage: '', frequency: '', notes: '', nutrients: '' });
 
   // --- Handlers Foods ---
   const handleAddFood = () => {
@@ -30,8 +33,14 @@ export default function NutritionPlan() {
   // --- Handlers Supplements ---
   const handleAddSup = () => {
       if(!newSup.name.trim()) return;
-      addSupplementItem(newSup);
-      setNewSup({ name: '', dosage: '', frequency: '', notes: '' });
+      // Processar string de nutrientes para array
+      const nutrientsArray = newSup.nutrients.split(',').map(s => s.trim()).filter(Boolean);
+      
+      addSupplementItem({
+          ...newSup,
+          nutrients: nutrientsArray
+      });
+      setNewSup({ name: '', dosage: '', frequency: '', notes: '', nutrients: '' });
   };
 
   return (
@@ -74,7 +83,7 @@ export default function NutritionPlan() {
                     <textarea placeholder="Benefícios..." className="w-full text-sm border-gray-200 rounded focus:ring-green-500" rows="2" value={newFood.description} onChange={e => setNewFood({...newFood, description: e.target.value})} />
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nutrientes</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nutrientes (Separar por vírgula)</label>
                     <input type="text" placeholder="Ex: Vit A, Fibras" className="w-full text-sm border-gray-200 rounded focus:ring-green-500" value={newFood.nutrients} onChange={e => setNewFood({...newFood, nutrients: e.target.value})} />
                 </div>
                 <div>
@@ -124,13 +133,17 @@ export default function NutritionPlan() {
             <p className="text-purple-700">Gerencie as vitaminas que podem ser prescritas ao longo da gestação.</p>
         </div>
 
-        {/* Form Suplementos */}
+        {/* Form Suplementos (ATUALIZADO) */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
              <h3 className="text-lg font-bold text-gray-800 mb-4">Nova Vitamina/Suplemento</h3>
              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div className="md:col-span-1">
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nome</label>
                     <input type="text" placeholder="Ex: Ômega 3" className="w-full text-sm border-gray-200 rounded focus:ring-purple-500" value={newSup.name} onChange={e => setNewSup({...newSup, name: e.target.value})} />
+                </div>
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nutrientes (Para as Metas)</label>
+                    <input type="text" placeholder="Ex: Ferro, Vitamina C" className="w-full text-sm border-gray-200 rounded focus:ring-purple-500" value={newSup.nutrients} onChange={e => setNewSup({...newSup, nutrients: e.target.value})} />
                 </div>
                 <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dosagem</label>
@@ -140,7 +153,7 @@ export default function NutritionPlan() {
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Frequência</label>
                     <input type="text" placeholder="Ex: 1x ao dia" className="w-full text-sm border-gray-200 rounded focus:ring-purple-500" value={newSup.frequency} onChange={e => setNewSup({...newSup, frequency: e.target.value})} />
                 </div>
-                 <div>
+                 <div className="md:col-span-4">
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Notas</label>
                     <input type="text" placeholder="Ex: Tomar longe do café" className="w-full text-sm border-gray-200 rounded focus:ring-purple-500" value={newSup.notes} onChange={e => setNewSup({...newSup, notes: e.target.value})} />
                 </div>
@@ -163,6 +176,7 @@ export default function NutritionPlan() {
                         <div className="mt-2 space-y-1 text-xs text-gray-600">
                              <p><strong className="text-purple-600">Dose:</strong> {sup.dosage}</p>
                              <p><strong className="text-purple-600">Freq:</strong> {sup.frequency}</p>
+                             {sup.nutrients && sup.nutrients.length > 0 && <p><strong className="text-purple-600">Contém:</strong> {sup.nutrients.join(', ')}</p>}
                              <p className="italic">{sup.notes}</p>
                         </div>
                      </div>
@@ -170,6 +184,47 @@ export default function NutritionPlan() {
             ))}
         </div>
       </section>
+      
+      {/* ... (Seção de Guidelines originais mantida - omitida para brevidade) ... */}
+      <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-3xl border border-green-100 shadow-sm flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h4 className="font-bold text-green-800 text-lg mb-1 flex items-center gap-2"><span className="text-2xl">🥑</span> {DIETARY_GUIDELINES_DETAILED.type}</h4>
+                        <p className="text-sm text-green-700 max-w-2xl">{DIETARY_GUIDELINES_DETAILED.specific_nutrient_targets}</p>
+                    </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                    {/* Lista do que COMER */}
+                    <div className="glass-card p-6 bg-green-50/30 border-green-100">
+                        <h4 className="font-bold text-green-600 border-b border-green-200 pb-3 mb-4 text-lg flex items-center gap-2">
+                             <span className="bg-green-100 p-1 rounded">✅</span> Preferir
+                        </h4>
+                        <ul className="space-y-3">
+                            {DIETARY_GUIDELINES_DETAILED.consume.map(i => (
+                                <li key={i} className="flex items-center text-sm text-gray-700 bg-white/60 p-2.5 rounded-lg shadow-sm border border-green-50">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-3 flex-shrink-0"></span>{i}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    
+                    {/* Lista do que EVITAR */}
+                    <div className="glass-card p-6 bg-red-50/30 border-red-100">
+                        <h4 className="font-bold text-red-500 border-b border-red-200 pb-3 mb-4 text-lg flex items-center gap-2">
+                            <span className="bg-red-100 p-1 rounded">🚫</span> Evitar / Cuidado
+                        </h4>
+                        <ul className="space-y-3">
+                            {DIETARY_GUIDELINES_DETAILED.avoid.map(i => (
+                                <li key={i} className="flex items-start text-sm text-gray-700 bg-white/60 p-2.5 rounded-lg shadow-sm border border-red-50">
+                                    <span className="w-2 h-2 bg-red-500 rounded-full mr-3 mt-1.5 flex-shrink-0"></span>{i}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+       </div>
+
     </div>
   );
 }

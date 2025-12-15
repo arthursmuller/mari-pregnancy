@@ -11,6 +11,7 @@ import TasksOverall from './components/TasksOverall.jsx';
 import AfterBorn from './components/AfterBorn.jsx';
 import VaccinesSection from './components/VaccinesSection.jsx';
 import NutritionPlan from './components/NutritionPlan.jsx';
+import MedicalRecord from './components/MedicalRecord.jsx';
 
 export default function App() {
   return (
@@ -69,6 +70,12 @@ export default function App() {
             <div className="glass-panel p-6 sm:p-10">
                 <section id="vaccines" className="scroll-mt-28">
                 <VaccinesSection />
+                </section>
+            </div>
+
+            <div className="glass-panel p-6 sm:p-10">
+                <section id="medical-record" className="scroll-mt-28">
+                  <MedicalRecord />
                 </section>
             </div>
           </main>

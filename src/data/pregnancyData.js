@@ -29,17 +29,20 @@ export const CRITICAL_ALERTS_AND_HIGHLIGHTS = {
     "Suspender cannabis, revisar remédios, iniciar vitaminas (Fólico, B12, Ferro).",
 };
 
+
 export const WOMAN_INFO = {
   last_menstrual_date: "2025-11-12",
   probable_conception_date: "2025-11-26",
   estimated_due_date: "2026-08-19",
-  current_status_dec_2025: "4 Semanas (Início do Primeiro Trimestre)",
+  current_status_dec_2025: "4 Semanas",
   pregnancy_discovery_date: "2025-12-12",
   height_m: 1.74,
-  weight_kg: 70,
-  birth: "1994-05-14",
-  diet: "ovolactovegetariana",
-  renda_do_casal: "19.000 BRL/mês",
+  initial_weight_kg: 70,
+  birth: "1994-05-16",
+  diet: "Ovolactovegetariana",
+  exercise_frequency: "3 a 5 vezes na semana",
+  medications: "Venvanse, Hormônio (Verificar nome)",
+  blood_type: "A+", 
 };
 
 export const PRENATAL_CARE_TEAM_AND_SCHEDULE = {
@@ -293,41 +296,38 @@ export const CRONOGRAMA_CALENDARIZADO = {
 };
 
 export const DIETARY_GUIDELINES_DETAILED = {
-  type: "Nutrição Vegetariana (Ovo-Lacto)",
+  type: "Nutrição Vegetariana (Ovo-Lacto) & Segurança",
   specific_nutrient_targets:
-    "Gestantes vegetarianas precisam de atenção à B12 (2,6 µg/dia), Ferro (~48,6 mg/dia), Colina (450 mg/dia), Cálcio (1.000 mg), Vitamina D e Ômega-3 (ALA/DHA).",
+    "Foco em B12 (2,6 µg), Ferro (48 mg), Colina (450 mg), Cálcio (1g) e gorduras de qualidade para o desenvolvimento cerebral do bebê.",
   consume: [
-    "Leguminosas, soja, tofu",
-    "Cereais integrais (aveia, quinoa)",
-    "Ovos e laticínios pasteurizados",
-    "Nozes, sementes, linhaça (ALA)",
-    "Frutas coloridas (Vit C)",
-    "Algas ou suplemento DHA",
+    "Leguminosas (Feijões, Lentilha, Grão de bico)",
+    "Gorduras Boas: Azeite de Oliva Extra Virgem, Abacate",
+    "Cereais integrais (Aveia, Quinoa, Arroz negro)",
+    "Ovos (sempre bem cozidos) e Laticínios pasteurizados",
+    "Nozes, Castanhas, Sementes de Linhaça/Chia (Ômega-3)",
+    "Frutas ricas em Vitamina C (para absorver o Ferro)",
+    "Folhas verdes escuras (Espinafre, Couve)"
   ],
   avoid: [
-    "Leite cru / Queijos não pasteurizados",
-    "Ovos moles ou crus",
-    "Peixe cru / alto mercúrio",
-    "Brotos crus / saladas não lavadas",
-    "Álcool & Energéticos",
-    "Cafeína > 200mg/dia",
+    "Queijos de mofo/casca branca (Gorgonzola, Roquefort, Brie, Camembert) - Risco de Listeria",
+    "Frutos do mar crus ou mal cozidos (Ostras, Mariscos, Sushi)",
+    "Camarão (risco alto de alergia e intoxicação se não for muito bem limpo/cozido)",
+    "Ovos com gema mole ou crus (Mousses caseiros, maionese caseira)",
+    "Peixes predadores com alto teor de mercúrio (Cação, Espada)",
+    "Carnes mal passadas ou cruas (Carpaccio)",
+    "Álcool & Excesso de Cafeína (>200mg)"
   ],
   notes: {
     caloric_myth:
-      "Comer 'por dois' é um mito. Você só precisa de ~300 calorias extras (1 lanche extra) começando no 2º trimestre.",
+      "Comer 'por dois' é um mito. O foco é qualidade, não quantidade. O azeite de oliva, por exemplo, é excelente para o bebê, mas calórico.",
     vegetarian_focus:
-      "Como ela é vegetariana, a nutricionista deve focar em Ferro (Feijões + Vitamina C) e suplementação de B12.",
-    // Informações adicionais de hidratação e consumo de doces para a dieta.  A hidratação adequada e
-    // o consumo moderado de açúcar são cruciais para o bem‑estar da mãe e do bebê.  Ver
-    // diretrizes do NHS e da ACOG para ingestão de líquidos e recomendações de especialistas sobre
-    // açúcar durante a gestação.
+      "Atenção redobrada à Vitamina B12 e Ferro. Sempre combine folhas verdes/feijão com limão ou laranja na mesma refeição.",
     hydration_and_water_info:
-      "Mantenha‑se bem hidratada: recomenda‑se beber de 6 a 8 copos (200 ml) de líquidos por dia – cerca de 1,6 litro – ou aproximadamente 10 copos (~2,3 litros) de água e outras bebidas saudáveis conforme sugestão do Colégio Americano de Obstetras e Ginecologistas. Ajuste a ingestão conforme o clima e o nível de atividade e observe se a urina permanece de cor clara. Evite bebidas açucaradas ou com cafeína em excesso.",
+      "Beba pelo menos 2 a 3 litros de água. A hidratação previne infecção urinária, reduz o inchaço e mantém o líquido amniótico no nível certo.",
     sweets_guidance:
-      "Doces em moderação: as alterações hormonais podem aumentar a vontade de comer açúcar, mas o consumo exagerado pode levar ao ganho de peso, cáries e diabetes gestacional. Uma ingestão moderada de açúcar (~25 g/dia) é considerada segura. Prefira frutas frescas para satisfazer o paladar doce e limite refrigerantes e sucos industrializados, que contêm grandes quantidades de açúca. Beba água para ajudar a controlar a vontade de comer doces e converse com a nutricionista se houver dúvidas sobre substituições mais saudáveis.",
+      "Desejo de doce? Prefira chocolate 70% ou frutas. O excesso de açúcar refinado aumenta o risco de diabetes gestacional e bebê GIG (muito grande).",
   },
 };
-
 export const EXERCISE_GUIDELINES = {
   weekly_goal:
     "150 minutos de atividade aeróbica de moderada intensidade por semana (ex: 30 min, 5x na semana).",
